@@ -43,6 +43,4 @@ func main() {
 	fmt.Printf("Total wins: %v \n", wins)
 
 	fmt.Printf("RTP: %v \n", math.Round(wins/float64(spent)*100)/100)
-	//fmt.Printf("RTP: %v \n", wins/float64(spent)*100)
-	// fmt.Println(client.Reel)
 }

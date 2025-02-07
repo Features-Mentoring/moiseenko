@@ -17,7 +17,6 @@ const dbConfig = "host=localhost user=gouser password=gouser dbname=gouser_db ss
 const (
 	tableCheckSQL  = "SELECT 1 FROM results;"
 	tableCreateSQL = "CREATE TABLE IF NOT EXISTS results (" +
-		//"id VARCHAR(100) PRIMARY KEY," +
 		"player int," +
 		"spin bigint," +
 		"result varchar(10)," +
@@ -40,7 +39,7 @@ func NewDBRepository() (*DBRepository, error) {
 	//create repository
 	rep := &DBRepository{DB: db}
 
-	//проверить подключение к базе
+	//check connection
 	if err = rep.Ping(); err != nil {
 		log.Print("Error db connection " + err.Error())
 		return nil, err
@@ -49,7 +48,7 @@ func NewDBRepository() (*DBRepository, error) {
 	log.Print("Db connection OK")
 	log.Print("DB string " + dbConfig)
 
-	//проверить есть ли таблица
+	//check table
 	rows, tableCheck := db.Query(tableCheckSQL)
 	if tableCheck != nil {
 		_, err := db.ExecContext(context.Background(), tableCreateSQL)
