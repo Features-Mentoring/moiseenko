@@ -40,3 +40,5 @@ Total spins: 1000000
 Total wins: 946880 
 RTP: 0.95 
 ```
+
+![alt text](image.png)

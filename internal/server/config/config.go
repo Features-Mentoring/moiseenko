@@ -1,13 +1,15 @@
 package config
 
 type Config struct {
-	Rtp        float64
-	WinAAAFreq float64
-	WinBBBFreq float64
-	WinCCCFreq float64
-	WinAAACost float64
-	WinBBBCost float64
-	WinCCCCost float64
+	Rtp          float64
+	WinAAAFreq   float64
+	WinBBBFreq   float64
+	WinCCCFreq   float64
+	WinAAACost   float64
+	WinBBBCost   float64
+	WinCCCCost   float64
+	DBConnection string
+	Host         string
 }
 
 const rtp = 0.95
@@ -20,12 +22,14 @@ const winCCCCost = 20
 
 func NewConfig() *Config {
 	return &Config{
-		Rtp:        rtp,
-		WinAAAFreq: winAAAFreq,
-		WinBBBFreq: winBBBFreq,
-		WinCCCFreq: winCCCFreq,
-		WinAAACost: winAAACost,
-		WinBBBCost: winBBBCost,
-		WinCCCCost: winCCCCost,
+		Rtp:          rtp,
+		WinAAAFreq:   winAAAFreq,
+		WinBBBFreq:   winBBBFreq,
+		WinCCCFreq:   winCCCFreq,
+		WinAAACost:   winAAACost,
+		WinBBBCost:   winBBBCost,
+		WinCCCCost:   winCCCCost,
+		Host:         "localhost:8081",
+		DBConnection: "host=localhost user=gouser password=gouser dbname=gouser_db sslmode=disable",
 	}
 }

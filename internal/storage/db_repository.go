@@ -12,11 +12,11 @@ import (
 const maxRetries = 3
 const defaultDelay time.Duration = 1
 const writeDBDelay time.Duration = 5
-const dbConfig = "host=localhost user=gouser password=gouser dbname=gouser_db sslmode=disable"
 
 const (
 	tableCheckSQL  = "SELECT 1 FROM results;"
 	tableCreateSQL = "CREATE TABLE IF NOT EXISTS results (" +
+		"id SERIAL PRIMARY KEY," +
 		"player int," +
 		"spin bigint," +
 		"result varchar(10)," +
@@ -24,14 +24,30 @@ const (
 		");"
 
 	insertSQL = "INSERT INTO results (player, spin, result, win) VALUES ($1, $2, $3, $4) "
+
+	selectBy50000 = "SELECT SUM(win) win" +
+		" FROM (" +
+		" SELECT *,ROW_NUMBER() OVER(ORDER BY id) rn " +
+		" FROM results" +
+		") t1" +
+		" GROUP BY (rn - 1)/50000" +
+		" ORDER BY (rn - 1)/50000"
+
+	selectBy20000ByUser = "SELECT SUM(win) win" +
+		" FROM (" +
+		" SELECT *,ROW_NUMBER() OVER(ORDER BY id) rn " +
+		" FROM results WHERE player=$1" +
+		") t1" +
+		" GROUP BY (rn - 1)/20000" +
+		" ORDER BY (rn - 1)/20000"
 )
 
 type DBRepository struct {
 	DB *sql.DB
 }
 
-func NewDBRepository() (*DBRepository, error) {
-	db, err := sql.Open("pgx", dbConfig)
+func NewDBRepository(conn string) (*DBRepository, error) {
+	db, err := sql.Open("pgx", conn)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +62,7 @@ func NewDBRepository() (*DBRepository, error) {
 	}
 
 	log.Print("Db connection OK")
-	log.Print("DB string " + dbConfig)
+	log.Print("DB string " + conn)
 
 	//check table
 	rows, tableCheck := db.Query(tableCheckSQL)
@@ -108,4 +124,52 @@ func (rep *DBRepository) AddBatch(models map[int]models.Result) (bool, error) {
 
 func (rep *DBRepository) Ping() error {
 	return rep.DB.PingContext(context.Background())
+}
+
+func (rep *DBRepository) SelectBy50000() ([]int64, error) {
+
+	data := make([]int64, 0)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultDelay*time.Second)
+	defer cancel()
+
+	rows, err := rep.DB.QueryContext(ctx, selectBy50000)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var val int64
+	for rows.Next() {
+		rows.Scan(&val)
+		data = append(data, val)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (rep *DBRepository) SelectByPlayer(player int64) ([]int64, error) {
+
+	data := make([]int64, 0)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultDelay*time.Second)
+	defer cancel()
+
+	rows, err := rep.DB.QueryContext(ctx, selectBy20000ByUser, player)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var val int64
+	for rows.Next() {
+		rows.Scan(&val)
+		data = append(data, val)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }

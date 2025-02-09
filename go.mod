@@ -5,6 +5,8 @@ go 1.22.0
 require github.com/go-chi/chi/v5 v5.2.1
 
 require (
+	github.com/go-echarts/go-echarts v1.0.0 // indirect
+	github.com/go-echarts/go-echarts/v2 v2.5.0 // indirect
 	github.com/go-resty/resty/v2 v2.16.5 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

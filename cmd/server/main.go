@@ -12,6 +12,6 @@ func main() {
 	server := server.NewServer(cfg)
 
 	if err := server.Run(); err != nil {
-		log.Fatal("Can't start server: " + err.Error())
+		log.Println("Server stoped: " + err.Error())
 	}
 }
