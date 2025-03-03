@@ -1,8 +1,8 @@
 package client
 
 import (
-	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/lvestera/slot-machine/internal/client/requests"
@@ -49,13 +49,12 @@ func NewClient(host string, name int) (*Client, error) {
 }
 
 func (client *Client) fillReel() {
-	reel := make([]string, 0, 1000)
+	reel := make([]string, 0, 10000)
 
 	var i, max int
 	for _, coeff := range client.Coefficients {
 
-		d := int(coeff.Distribution * 1000)
-		//log.Println("Dist ", coeff.Symbol, " ", coeff.Distribution, " ", i)
+		d := int(coeff.Distribution)
 		max = i + d
 		for i < max {
 			reel = append(reel, coeff.Symbol)
@@ -63,7 +62,7 @@ func (client *Client) fillReel() {
 		}
 	}
 
-	for i < 1000 {
+	for i < 10000 {
 		reel = append(reel, "0")
 		i++
 	}
@@ -81,17 +80,30 @@ func (client *Client) Play(spins int) (uint64, float64, error) {
 
 	buffer := make(map[int]models.Result)
 	iBuf := 0
+
+	lettersCount := len(client.Coefficients)
+	letters := make([]string, lettersCount)
+
+	for i, coeff := range client.Coefficients {
+		letters[i] = coeff.Symbol
+	}
+
+	var reelResult string
 	for i := 0; i < spins; i++ {
 		spent += 1
 		win = 0
 
-		reel1 := client.SpinReel()
-		reel2 := client.SpinReel()
-		reel3 := client.SpinReel()
+		reelValue := client.SpinReel()
 
-		for _, coeff := range client.Coefficients {
-			if reel1 == reel2 && reel1 == reel3 && reel1 == coeff.Symbol {
-				win = coeff.Cost
+		if reelValue == "0" {
+			reelResult = generateRandomResult(letters, lettersCount)
+		} else {
+			for _, coeff := range client.Coefficients {
+				if reelValue == coeff.Symbol {
+					win = coeff.Cost
+					reelResult = strings.Repeat(coeff.Symbol, lettersCount)
+					break
+				}
 			}
 		}
 
@@ -100,11 +112,11 @@ func (client *Client) Play(spins int) (uint64, float64, error) {
 		result := models.Result{
 			Player: client.Name,
 			Spin:   i,
-			Result: fmt.Sprint(reel1, reel2, reel3),
+			Result: reelResult,
 			Win:    win,
 		}
 
-		if iBuf == 30 {
+		if iBuf == 50 {
 			err = client.RequestClient.SaveResults(buffer)
 			if err != nil {
 				return spent, wins, err
@@ -128,6 +140,30 @@ func (client *Client) Play(spins int) (uint64, float64, error) {
 	}
 
 	return spent, wins, nil
+}
+
+func generateRandomResult(letters []string, lettersCount int) string {
+	var letterIndex int
+	var nextLetter string
+
+	result := make([]string, 0, lettersCount)
+	for i := 0; i < lettersCount; i++ {
+		letterIndex = rand.IntN(lettersCount)
+		nextLetter = letters[letterIndex]
+		result = append(result, nextLetter)
+	}
+
+	if strings.Count(strings.Join(result, ""), nextLetter) != lettersCount {
+		return strings.Join(result, "")
+	}
+
+	if letterIndex == lettersCount-1 {
+		result[0] = letters[0]
+	} else {
+		result[0] = letters[letterIndex+1]
+	}
+
+	return strings.Join(result, "")
 }
 
 func (client *Client) SpinReel() string {

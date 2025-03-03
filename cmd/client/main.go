@@ -9,14 +9,16 @@ import (
 	"github.com/lvestera/slot-machine/internal/client"
 )
 
+const host = "http://localhost:8081"
+const perPlayer = 200_000
+
 func main() {
 	log.Println("Run clients")
-
-	host := "http://localhost:8081"
 
 	var wg sync.WaitGroup
 	resultCh := make(chan float64)
 	var wins float64
+	var spins int
 
 	for i := 0; i < 5; i++ {
 
@@ -29,12 +31,13 @@ func main() {
 				return
 			}
 
-			_, wins, err := client.Play(200000)
+			_, wins, err := client.Play(perPlayer)
 			resultCh <- wins
 			if err != nil {
 				log.Println(err)
 				return
 			}
+			spins += perPlayer
 		}()
 	}
 
@@ -45,10 +48,10 @@ func main() {
 	}()
 	wg.Wait()
 	close(resultCh)
-	spent := 1000000
-	fmt.Printf("Total spent: %v \n", spent)
-	fmt.Printf("Total spins: %v \n", spent)
+
+	fmt.Printf("Total spent: %v \n", spins)
+	fmt.Printf("Total spins: %v \n", spins)
 	fmt.Printf("Total wins: %v \n", wins)
 
-	fmt.Printf("RTP: %v \n", math.Round(wins/float64(spent)*100)/100)
+	fmt.Printf("RTP: %v \n", math.Round(wins/float64(spins)*100)/100)
 }

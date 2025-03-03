@@ -28,31 +28,20 @@ func (h GetConfigHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *GetConfigHandler) ComputeCoeff() []models.Coefficient {
 
-	r1 := h.Cfg.WinAAAFreq / h.Cfg.WinAAACost
-	r2 := h.Cfg.WinBBBFreq / h.Cfg.WinBBBCost
-	r3 := h.Cfg.WinCCCFreq / h.Cfg.WinCCCCost
+	resultCoefficients := make([]models.Coefficient, 0, len(h.Cfg.Coefficients))
+	var coefficient models.Coefficient
 
-	d1 := math.Round(math.Cbrt(r1)*1000) / 1000
-	d2 := math.Round(math.Cbrt(r2)*1000) / 1000
-	d3 := math.Round(math.Cbrt(r3)*1000) / 1000
+	for letter, values := range h.Cfg.Coefficients {
+		distribution := math.Round(values[0] / values[1] * 10000)
 
-	coeff := make([]models.Coefficient, 0, 3)
+		coefficient = models.Coefficient{
+			Symbol:       letter,
+			Distribution: distribution,
+			Cost:         values[1],
+		}
 
-	coeffA := models.Coefficient{
-		Symbol:       "A",
-		Distribution: d1,
-		Cost:         h.Cfg.WinAAACost,
-	}
-	coeffB := models.Coefficient{
-		Symbol:       "B",
-		Distribution: d2,
-		Cost:         h.Cfg.WinBBBCost,
-	}
-	coeffC := models.Coefficient{
-		Symbol:       "C",
-		Distribution: d3,
-		Cost:         h.Cfg.WinCCCCost,
+		resultCoefficients = append(resultCoefficients, coefficient)
 	}
 
-	return append(coeff, coeffA, coeffB, coeffC)
+	return resultCoefficients
 }

@@ -8,6 +8,9 @@ import (
 	"github.com/lvestera/slot-machine/internal/models"
 )
 
+const getConfigUrl = "/get-config"
+const sendResultUrl = "/send-result"
+
 type RequestClient struct {
 	Host   string
 	Client resty.Client
@@ -27,7 +30,7 @@ func GetRequestClient(host string) *RequestClient {
 func (rc *RequestClient) GetConfig() ([]models.Coefficient, error) {
 	log.Println("Request config")
 
-	resp, err := rc.Client.NewRequest().Post("/get-config")
+	resp, err := rc.Client.NewRequest().Post(getConfigUrl)
 
 	if err != nil {
 		return nil, err
@@ -44,7 +47,6 @@ func (rc *RequestClient) GetConfig() ([]models.Coefficient, error) {
 }
 
 func (rc *RequestClient) SaveResults(results map[int]models.Result) error {
-	//log.Println("Save result")
 
 	var err error
 	var body []byte
@@ -53,7 +55,7 @@ func (rc *RequestClient) SaveResults(results map[int]models.Result) error {
 		return err
 	}
 
-	_, err = rc.Client.NewRequest().SetBody(body).Post("/send-result")
+	_, err = rc.Client.NewRequest().SetBody(body).Post(sendResultUrl)
 	if err != nil {
 		return err
 	}

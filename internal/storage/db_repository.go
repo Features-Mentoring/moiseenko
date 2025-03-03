@@ -9,7 +9,6 @@ import (
 	"github.com/lvestera/slot-machine/internal/models"
 )
 
-const maxRetries = 3
 const defaultDelay time.Duration = 1
 const writeDBDelay time.Duration = 5
 
@@ -25,7 +24,7 @@ const (
 
 	insertSQL = "INSERT INTO results (player, spin, result, win) VALUES ($1, $2, $3, $4) "
 
-	selectBy50000 = "SELECT SUM(win) win" +
+	selectCommon = "SELECT SUM(win) win" +
 		" FROM (" +
 		" SELECT *,ROW_NUMBER() OVER(ORDER BY id) rn " +
 		" FROM results" +
@@ -33,7 +32,7 @@ const (
 		" GROUP BY (rn - 1)/50000" +
 		" ORDER BY (rn - 1)/50000"
 
-	selectBy20000ByUser = "SELECT SUM(win) win" +
+	selectByUser = "SELECT SUM(win) win" +
 		" FROM (" +
 		" SELECT *,ROW_NUMBER() OVER(ORDER BY id) rn " +
 		" FROM results WHERE player=$1" +
@@ -82,19 +81,6 @@ func NewDBRepository(conn string) (*DBRepository, error) {
 	return rep, nil
 }
 
-func (rep *DBRepository) Add(m models.Result) (bool, error) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), writeDBDelay*time.Second)
-	defer cancel()
-
-	_, err := rep.DB.ExecContext(ctx, insertSQL, m.Player, m.Spin, m.Result, m.Win)
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
-
 func (rep *DBRepository) AddBatch(models map[int]models.Result) (bool, error) {
 	tx, err := rep.DB.Begin()
 	if err != nil {
@@ -126,13 +112,13 @@ func (rep *DBRepository) Ping() error {
 	return rep.DB.PingContext(context.Background())
 }
 
-func (rep *DBRepository) SelectBy50000() ([]int64, error) {
+func (rep *DBRepository) SelectCommon() ([]int64, error) {
 
 	data := make([]int64, 0)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDelay*time.Second)
 	defer cancel()
 
-	rows, err := rep.DB.QueryContext(ctx, selectBy50000)
+	rows, err := rep.DB.QueryContext(ctx, selectCommon)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +142,7 @@ func (rep *DBRepository) SelectByPlayer(player int64) ([]int64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDelay*time.Second)
 	defer cancel()
 
-	rows, err := rep.DB.QueryContext(ctx, selectBy20000ByUser, player)
+	rows, err := rep.DB.QueryContext(ctx, selectByUser, player)
 	if err != nil {
 		return nil, err
 	}

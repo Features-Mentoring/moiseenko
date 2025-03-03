@@ -1,34 +1,23 @@
 package config
 
 type Config struct {
-	Rtp          float64
-	WinAAAFreq   float64
-	WinBBBFreq   float64
-	WinCCCFreq   float64
-	WinAAACost   float64
-	WinBBBCost   float64
-	WinCCCCost   float64
+	Coefficients map[string][2]float64
 	DBConnection string
 	Host         string
 }
 
-const rtp = 0.95
-const winAAAFreq = 0.5  //50% of wins
-const winBBBFreq = 0.3  //30% of wins
-const winCCCFreq = 0.15 //15% of wins
-const winAAACost = 5
-const winBBBCost = 10
-const winCCCCost = 20
-
 func NewConfig() *Config {
+	//symbol: {frequency, cost}
+	coeff := map[string][2]float64{
+		"A": {0.4, 2},   //40% of wins
+		"B": {0.25, 5},  //25% of wins
+		"C": {0.15, 10}, //15% of wins
+		"D": {0.1, 20},  //10% of wins
+		"E": {0.05, 30}, //5% of wins
+	}
+
 	return &Config{
-		Rtp:          rtp,
-		WinAAAFreq:   winAAAFreq,
-		WinBBBFreq:   winBBBFreq,
-		WinCCCFreq:   winCCCFreq,
-		WinAAACost:   winAAACost,
-		WinBBBCost:   winBBBCost,
-		WinCCCCost:   winCCCCost,
+		Coefficients: coeff,
 		Host:         "localhost:8081",
 		DBConnection: "host=localhost user=gouser password=gouser dbname=gouser_db sslmode=disable",
 	}

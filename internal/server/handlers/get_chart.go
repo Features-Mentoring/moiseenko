@@ -21,7 +21,7 @@ func (h GetChartHandler) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Add("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 
-	dataCommon, err := h.Db.SelectBy50000()
+	dataCommon, err := h.Db.SelectCommon()
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
